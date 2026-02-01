@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Will You Be My Valentine?</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Indie+Flower&family=Poppins:wght@400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            overflow: hidden;
+        }
+
+        .handwritten { font-family: 'Indie Flower', cursive; }
+
+        /* Floating Hearts Background Animation */
+        .heart-bg {
+            position: absolute;
+            color: rgba(255, 182, 193, 0.5);
+            animation: float 10s infinite ease-in-out;
+            z-index: -1;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            50% { opacity: 0.8; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+
+        #yesBtn { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        
+        /* Music Control Button */
+        #music-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 50;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #music-control:hover { background: rgba(255, 255, 255, 0.8); transform: scale(1.1); }
+    </style>
+</head>
+<body class="h-screen flex flex-col justify-center items-center bg-pink-50 relative" onclick="startMusic()">
+
+    <audio id="bgMusic" loop>
+        <source src="https://github.com/hoangsonww/will-you-be-my-valentine/raw/main/music.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+
+    <button id="music-control" onclick="toggleMusic(event)" title="Play/Pause Music">
+        🎵
+    </button>
+
+    <div id="hearts-container" class="absolute inset-0 overflow-hidden pointer-events-none"></div>
+
+    <div class="text-center z-10 max-w-md w-full p-4">
+        <div class="mb-6 flex justify-center">
+            <img id="mainImage" 
+                 src="https://media.tenor.com/f1xnRxTRxLAAAAAj/bears-hugging.gif" 
+                 alt="Cute bear asking" 
+                 class="h-48 rounded-lg object-cover drop-shadow-xl">
+        </div>
+
+        <h1 id="questionText" class="text-3xl md:text-4xl font-bold text-pink-600 mb-8 handwritten leading-tight">
+            Will you be my Valentine? 🌹
+        </h1>
+
+        <div class="flex flex-wrap justify-center gap-4 items-center" id="buttonContainer">
+            <button id="yesBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full shadow-lg text-xl transform hover:scale-105 active:scale-95 transition-all">Yes!</button>
+            <button id="noBtn" class="bg-red-400 hover:bg-red-500 text-white font-bold py-3 px-8 rounded-full shadow-lg text-xl transition-all">No</button>
+        </div>
+    </div>
+
+    <script>
+        const yesBtn = document.getElementById('yesBtn');
+        const noBtn = document.getElementById('noBtn');
+        const questionText = document.getElementById('questionText');
+        const mainImage = document.getElementById('mainImage');
+        const music = document.getElementById('bgMusic');
+
+        // MUSIC LOGIC
+        let musicStarted = false;
+        
+        function startMusic() {
+            if (!musicStarted) {
+                music.play().catch(error => console.log("Interaction needed for music"));
+                musicStarted = true;
+            }
+        }
+
+        function toggleMusic(e) {
+            e.stopPropagation(); // Prevent triggering body click
+            if (music.paused) {
+                music.play();
+                document.getElementById('music-control').innerText = "🎵";
+            } else {
+                music.pause();
+                document.getElementById('music-control').innerText = "🔇";
+            }
+        }
+
+        // GAME LOGIC
+        let clickCount = 0;
+        const noTexts = ["No", "Are you sure?", "Really sure?", "Think again!", "Last chance!", "Surely not?", "You might regret this!", "Give it another thought!", "Are you absolutely certain?", "This could be a mistake!", "Have a heart!", "Don't be so cold!", "Change of heart?", "Wouldn't you reconsider?", "Is that your final answer?", "You're breaking my heart ;(", "Plsss? :("];
+
+        noBtn.addEventListener('click', (event) => {
+            event.stopPropagation(); // Stop click from restarting music logic unnecessarily
+            clickCount++;
+            const textIndex = Math.min(clickCount, noTexts.length - 1);
+            noBtn.innerText = noTexts[textIndex];
+            const fontSize = 1.25 * (1 + clickCount * 1.2);
+            yesBtn.style.fontSize = `${fontSize}rem`;
+            yesBtn.style.padding = `${1 + clickCount * 0.5}rem ${2 + clickCount * 1}rem`;
+            if (clickCount > 8) {
+                noBtn.style.display = "none";
+                questionText.innerText = "Okay, now you HAVE to say Yes! ❤️";
+            }
+        });
+
+        yesBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            questionText.innerText = "YAY! I knew you would say yes! ❤️";
+            mainImage.src = "https://media.tenor.com/gUiu1zyxfzYAAAAi/bear-kiss-bear-kisses.gif";
+            yesBtn.style.display = 'none';
+            noBtn.style.display = 'none';
+            document.getElementById('music-control').style.display = 'none'; // Hide music control on success
+            launchConfetti();
+        });
+
+        // HEARTS ANIMATION
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart-bg');
+            heart.innerHTML = '❤️';
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.fontSize = Math.random() * 20 + 20 + 'px';
+            heart.style.animationDuration = Math.random() * 3 + 2 + 's';
+            document.getElementById('hearts-container').appendChild(heart);
+            setTimeout(() => heart.remove(), 5000);
+        }
+        setInterval(createHeart, 300);
+
+        // CONFETTI
+        function launchConfetti() {
+            var duration = 15 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+            function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) return clearInterval(interval);
+                var particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        }
+    </script>
+</body>
+</html>
